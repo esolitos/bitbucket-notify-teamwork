@@ -4,7 +4,7 @@ ENV NODE_PORT 3030
 
 COPY package*.json ./
 
-RUN npm install --only=prod
+RUN npm install
 
 COPY . .
 
