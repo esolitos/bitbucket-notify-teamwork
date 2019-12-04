@@ -3,6 +3,11 @@
   "description": "Integrates Bitbucket commits with TeamWork task comments",
   "version": "0.0.0",
   "homepage": "",
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/esolitos/bitbucket-notify-teamwork.git"
+  },
+  "license": "MIT",
   "main": "src",
   "keywords": [
     "feathers"
