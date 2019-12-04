@@ -1,4 +1,4 @@
 {
-  "host": "bb-vs-tw-app.feathersjs.com",
-  "port": "PORT"
+  "host": "WODBY_DOMAIN",
+  "port": "NODE_PORT"
 }

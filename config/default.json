@@ -2,8 +2,8 @@
   "host": "localhost",
   "port": 3030,
   "public": "../public/",
-  "paginate": {
-    "default": 10,
-    "max": 50
-  }
+  "webhook_token": "APP_AUTH_TOKEN",
+  "teamwork_api_key": "TW_API_KEY",
+  "teamwork_domain":"TW_URL",
+  "teamwork_author_id": "TW_AUTHOR_ID"
 }

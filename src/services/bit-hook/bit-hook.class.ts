@@ -1,16 +1,18 @@
 import {Id, NullableId, Params, ServiceMethods} from '@feathersjs/feathers';
-import {Application } from '../../declarations';
+import {Application} from '../../declarations';
 import {NotImplemented} from "@feathersjs/errors";
-
-interface Data {}
+import {TwCommentService} from "../tw-comment/tw-comment.class";
 
 enum BbObjectType {
   Branch = 'branch',
-  Tag = 'tag'
+  Tag = 'tag',
 }
 
+
 interface BbLinked {
-  links: Array<BbLink>;
+  links: {
+    [key: string]: BbLink
+  };
 }
 
 interface BbOwner extends BbLinked {
@@ -56,11 +58,11 @@ interface BbHookBody {
 
 interface BbHookPushBody extends BbHookBody{
   push: {
-    changes: Array<BbChanges>;
+    changes: Array<BbChange>;
   };
 }
 
-interface BbChanges extends BbLinked {
+interface BbChange extends BbLinked {
   created: boolean,
   closed: boolean,
   forced: boolean,
@@ -93,27 +95,70 @@ interface BbCommit extends BbLinked {
 
 interface ServiceOptions {}
 
-export class BitHook implements ServiceMethods<Data> {
+export class BitHookService implements ServiceMethods<any> {
   app: Application;
   options: ServiceOptions;
+  twComment: TwCommentService;
 
   constructor (options: ServiceOptions = {}, app: Application) {
     this.options = options;
     this.app = app;
+    this.twComment = this.app.service("tw-comment");
   }
 
-  async create (data: BbHookPushBody, params?: Params): Promise<Data> {
-    if (Array.isArray(data)) {
-      return Promise.all(data.map(current => this.create(current, params)));
+  async create (data: BbHookPushBody, params?: Params): Promise<any> {
+    const app = this.app;
+    await data.push.changes.forEach((change): any => {
+      change.commits.forEach((commit) => {
+        this.processCommit(commit, app.service('tw-comment'))
+          .then((result) => {
+            return result;
+          })
+          .catch((reason => {
+              console.error(reason);
+              return false;
+            })
+          );
+      });
+    });
+
+    return [];
+  }
+
+  async processCommit(commit: BbCommit, twComment: TwCommentService): Promise<boolean> {
+    const messageRegex = new RegExp("#TW-(?<id>\\d+):(?<message>.*)", 'ims');
+    const matches = commit.message.match(messageRegex);
+    if (!matches) {
+      console.log("Not a match: " + commit.message);
+      return false;
     }
 
-    return data;
+    if (matches.groups === undefined || matches.groups['id'] === null) {
+      console.log("Missing ID: " + commit.message);
+      return false;
+    }
+
+    const message: string = `
+<b>${commit.author.raw}</b> pushed a <a href="${commit.links.html.href}">commit ${commit.hash.substr(0, 8)}</a> for this task.
+
+<blockquote>${commit.message}</blockquote>
+`;
+
+    const taskData = {
+      task_id: matches.groups['id'],
+      body: message,
+      isPrivate: true,
+      'content-type': 'HTML',
+    };
+
+    return twComment.create(taskData);
   }
 
+
   // Not used methods
-  async find (params?: Params): Promise<Data> {throw new NotImplemented()}
-  async get (id: Id, params?: Params): Promise<Data> {throw new NotImplemented()}
-  async update (id: NullableId, data: Data, params?: Params): Promise<any> {throw new NotImplemented()}
-  async patch (id: NullableId, data: Data, params?: Params): Promise<any> {throw new NotImplemented()}
-  async remove (id: NullableId, params?: Params): Promise<Data> {throw new NotImplemented()}
+  async find (params?: Params): Promise<any> {throw new NotImplemented()}
+  async get (id: Id, params?: Params): Promise<any> {throw new NotImplemented()}
+  async update (id: NullableId, data: any, params?: Params): Promise<any> {throw new NotImplemented()}
+  async patch (id: NullableId, data: any, params?: Params): Promise<any> {throw new NotImplemented()}
+  async remove (id: NullableId, params?: Params): Promise<any> {throw new NotImplemented()}
 }
