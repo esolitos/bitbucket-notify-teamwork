@@ -32,15 +32,22 @@ export class TwCommentService implements ServiceMethods<any> {
   constructor (options: ServiceOptions, app: Application) {
     this.options = options;
     this.app = app;
+  }
 
-    if (!(this.options.apiKey && this.options.teamWorkUrl)) {
-      throw new GeneralError("Missing API key and/or domain, please refer to the README to configure the service.");
+  private init() {
+    if (this.teamWorkApi === undefined) {
+      if (!(this.options.apiKey && this.options.teamWorkUrl)) {
+        throw new GeneralError("Missing API key and/or domain, please refer to the README to configure the service.");
+      }
+
+      this.teamWorkApi = require('teamwork-api')(this.options.apiKey, this.options.teamWorkUrl, true);
     }
-
-    this.teamWorkApi = require('teamwork-api')(this.options.apiKey, this.options.teamWorkUrl, true);
   }
 
   async create (commentData: TwCommentInterface): Promise<boolean> {
+    // Delay init when it's needed.
+    this.init();
+
     // Override the author of the comment based on the configuration.
     if (this.options.commentUserId !== undefined) {
       commentData["author-id"] = this.options.commentUserId;

@@ -1,4 +1,4 @@
 {
-  "host": "WODBY_DOMAIN",
+  "host": "NODE_HOST",
   "port": "NODE_PORT"
 }
