@@ -98,12 +98,10 @@ interface ServiceOptions {}
 export class BitHookService implements ServiceMethods<any> {
   app: Application;
   options: ServiceOptions;
-  twComment: TwCommentService;
 
   constructor (options: ServiceOptions = {}, app: Application) {
     this.options = options;
     this.app = app;
-    this.twComment = this.app.service("tw-comment");
   }
 
   async create (data: BbHookPushBody, params?: Params): Promise<any> {
@@ -126,31 +124,58 @@ export class BitHookService implements ServiceMethods<any> {
   }
 
   async processCommit(commit: BbCommit, twComment: TwCommentService): Promise<boolean> {
-    const messageRegex = new RegExp("#TW-(?<id>\\d+):(?<message>.*)", 'ims');
-    const matches = commit.message.match(messageRegex);
+    const matchAll = require('string.prototype.matchall');
+
+    const messageRegex = new RegExp("#TW-(?<id>\\d+)", 'gims');
+    const matches = matchAll(commit.message, messageRegex);
     if (!matches) {
       console.log("Not a match: " + commit.message);
       return false;
     }
-
-    if (matches.groups === undefined || matches.groups['id'] === null) {
-      console.log("Missing ID: " + commit.message);
-      return false;
+    else {
+      console.debug(`Matched ${matches.length} commits from: ${commit.message}.`);
     }
 
-    const message: string = `
-<b>${commit.author.raw}</b> pushed a <a href="${commit.links.html.href}">commit ${commit.hash.substr(0, 8)}</a> for this task.
+    for(let match of matches) {
+      if (match.groups === undefined || match.groups['id'] === null) {
+        console.log("Missing ID: " + commit.message);
+        return false;
+      }
+      let taskId = match.groups['id'];
+      this.pushComment(taskId, commit).catch((error: any) => {
+        console.log(`Could not push message to task: ${taskId}`);
 
-<blockquote>${commit.message}</blockquote>
+        const errorMsg = (error.message !== undefined) ? error.message : error;
+        console.error(errorMsg);
+      });
+    }
+
+    return true;
+  }
+
+  async pushComment(taskId: string, commit: BbCommit): Promise<boolean> {
+    const twComment = this.app.service("tw-comment");
+    const escape = require('escape-html');
+
+    const author = escape(commit.author.raw);
+    // Escape html and do a nl2br replace.
+    const commitMessage = escape(commit.message).replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1<br>$2');
+
+
+    const taskComment: string = `
+<b>${author}</b> pushed a <a href="${commit.links.html.href}">commit ${commit.hash.substr(0, 8)}</a> for this task.
+
+<blockquote>${commitMessage}</blockquote>
 `;
 
     const taskData = {
-      task_id: matches.groups['id'],
-      body: message,
+      task_id:taskId,
+      body: taskComment,
       isPrivate: true,
       'content-type': 'HTML',
     };
 
+    console.info(`Pushing message to task ${taskId}`);
     return twComment.create(taskData);
   }
 
