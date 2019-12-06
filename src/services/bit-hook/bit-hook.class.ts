@@ -126,17 +126,13 @@ export class BitHookService implements ServiceMethods<any> {
   async processCommit(commit: BbCommit, twComment: TwCommentService): Promise<boolean> {
     const matchAll = require('string.prototype.matchall');
 
-    const messageRegex = new RegExp("#TW-(?<id>\\d+)", 'gims');
-    const matches = matchAll(commit.message, messageRegex);
-    if (!matches) {
-      console.log("Not a match: " + commit.message);
-      return false;
-    }
-    else {
-      console.debug(`Matched ${matches.length} commits from: ${commit.message}.`);
-    }
+    const matches = matchAll(commit.message, /#TW-(?<id>\d+)/gims);
+    let count = 0;
 
     for(let match of matches) {
+      // Count matches
+      count++;
+
       if (match.groups === undefined || match.groups['id'] === null) {
         console.log("Missing ID: " + commit.message);
         return false;
@@ -148,6 +144,11 @@ export class BitHookService implements ServiceMethods<any> {
         const errorMsg = (error.message !== undefined) ? error.message : error;
         console.error(errorMsg);
       });
+    }
+
+    if (count <= 0) {
+      console.log("Not a match: " + commit.message);
+      return false;
     }
 
     return true;
