@@ -164,7 +164,7 @@ export class BitHookService implements ServiceMethods<any> {
 
 
     const taskComment: string = `
-<b>${author}</b> pushed a <a href="${commit.links.html.href}">commit ${commit.hash.substr(0, 8)}</a> for this task.
+<b>${author}</b> pushed a <a href="${commit.links.html.href}">commit ${commit.hash.substr(0, 8)}</a> on branch ${commit.branch} for this task.
 
 <blockquote>${commitMessage}</blockquote>
 `;
