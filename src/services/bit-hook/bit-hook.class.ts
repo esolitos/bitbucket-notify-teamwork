@@ -129,6 +129,9 @@ export class BitHookService implements ServiceMethods<any> {
     const matches = matchAll(commit.message, /#TW-(?<id>\d+)/gims);
     let count = 0;
 
+    // TODO: Ensure we post 1 comment for each TW task, not multiple!
+    // Idea: Build a map of messages, indexed by taskId and commit hash (to avoid duplicates)
+    // (requires updating tw comment body)
     for(let match of matches) {
       // Count matches
       count++;
