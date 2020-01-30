@@ -173,12 +173,12 @@ export class BitHookService implements ServiceMethods<any> {
 `;
 
     const taskData = {
-      task_id:taskId,
-      body: taskComment,
+      'task_id': taskId,
+      'body': taskComment,
       // An empty string in the "notify" means: do not notify anyone
       // while not changing the privacy.
-      notify: '',
-      // isPrivate: true,
+      'notify': '',
+      // 'isPrivate': true,
       'content-type': 'HTML',
     };
 
