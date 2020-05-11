@@ -2,6 +2,7 @@ import {Id, NullableId, Params, ServiceMethods} from '@feathersjs/feathers';
 import {Application} from '../../declarations';
 import {NotImplemented} from "@feathersjs/errors";
 import {TwCommentService} from "../tw-comment/tw-comment.class";
+import {existsSync, mkdirSync, writeFile} from "fs";
 
 enum BbObjectType {
   Branch = 'branch',
@@ -106,26 +107,25 @@ export class BitHookService implements ServiceMethods<any> {
 
   async create (data: BbHookPushBody, params?: Params): Promise<any> {
     const app = this.app;
-    await data.push.changes.forEach((change): any => {
+    const twService = app.service('tw-comment');
+    await data.push.changes.forEach((change): void => {
       change.commits.forEach((commit) => {
-        this.processCommit(commit, app.service('tw-comment'))
-          .then((result) => {
-            return result;
-          })
-          .catch((reason => {
-              console.error(reason);
-              return false;
-            })
-          );
+        this.processCommit(data.repository, commit, twService)
+          .catch(reason => console.error(reason));
       });
     });
 
     return [];
   }
 
-  async processCommit(commit: BbCommit, twComment: TwCommentService): Promise<boolean> {
-    const matchAll = require('string.prototype.matchall');
+  async processCommit(repository: BbRepository, commit: BbCommit, twComment: TwCommentService): Promise<boolean> {
+    // Verify if we already processed the commit.
+    if (this.isCommitProcessed(repository, commit)) {
+      console.debug(`Skip already processed ${repository.full_name}#${commit.hash}`);
+      return true;
+    }
 
+    const matchAll = require('string.prototype.matchall');
     const matches = matchAll(commit.message, /#TW-(?<id>\d+)/gims);
     let count = 0;
 
@@ -193,4 +193,31 @@ export class BitHookService implements ServiceMethods<any> {
   async update (id: NullableId, data: any, params?: Params): Promise<any> {throw new NotImplemented()}
   async patch (id: NullableId, data: any, params?: Params): Promise<any> {throw new NotImplemented()}
   async remove (id: NullableId, params?: Params): Promise<any> {throw new NotImplemented()}
+
+  private isCommitProcessed(repository: BbRepository, commit: BbCommit): boolean {
+    const storage_path = this.app.get("commit_storage"),
+      repo_name = repository.full_name,
+      repo_dir = `${storage_path}/${repo_name}`,
+      commit_file = `${repo_dir}/${commit.hash}`
+    ;
+
+    // Ensure the repository directory exists in the storage.
+    if (!existsSync(repo_dir)){
+      mkdirSync(repo_dir, {recursive: true});
+    }
+
+    // If a file matching teh commit hash exists, then the commit was already processed.
+    if (existsSync(commit_file)) {
+      return true;
+    }
+
+    writeFile(commit_file, commit.message, {mode: 0o660}, (err) => {
+      if (err) {
+        console.error(err);
+      }
+    })
+
+
+    return false;
+  }
 }

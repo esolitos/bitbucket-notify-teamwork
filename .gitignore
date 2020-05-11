@@ -110,3 +110,6 @@ $RECYCLE.BIN/
 # Others
 lib/
 data/
+
+# Ignore the content of the default "commit storage" directory
+/storage/*
