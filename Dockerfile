@@ -10,4 +10,6 @@ COPY . .
 
 EXPOSE 3030
 
+VOLUME ["${APP_ROOT}/storage"]
+
 CMD ["npm", "run", "start"]
