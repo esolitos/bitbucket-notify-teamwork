@@ -58,7 +58,7 @@
     "@types/helmet": "0.0.45",
     "@types/mocha": "^5.2.7",
     "@types/serve-favicon": "^2.5.0",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "mocha": "^6.2.3",
     "nodemon": "^2.0.3",
     "shx": "^0.3.2",
