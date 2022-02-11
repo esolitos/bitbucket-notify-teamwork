@@ -1,5 +1,14 @@
-# BB-vs-TW
-> Integrates Bitbucket commits with TeamWork task comments
+# BitBucket and TeamWork Projects notifications bot
+> Integrates [Bitbucket's](https://bitbucket.org/) commits with [TeamWork Projects's](https://www.teamwork.com/) task comments
+
+---
+
+## Repository not maintained!
+
+This repo is not maintained anymore, you should look at [ramsalt/bitbucket-notify-teamwork](https://github.com/ramsalt/bitbucket-notify-teamwork) for a maitnained version of this software.
+
+---
+
 
 This is a simple webhook server which allows to proxy commit info from Bitbucket to TeamWork Project.
 
